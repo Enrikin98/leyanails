@@ -55,6 +55,17 @@ CREATE TABLE IF NOT EXISTS blocked (
   reason TEXT DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash TEXT PRIMARY KEY,
+  expires    INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS auth_fails (
+  who   TEXT PRIMARY KEY,
+  fails INTEGER DEFAULT 0,
+  until INTEGER DEFAULT 0
+);
+
 -- Ajustes por defecto (no sobreescribe los existentes)
 INSERT OR IGNORE INTO settings (key, value) VALUES
   ('business_name', 'Leya Nails'),

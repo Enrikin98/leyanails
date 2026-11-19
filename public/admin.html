@@ -48,7 +48,13 @@
     .weekdays input { width: auto; }
     .rate-big { font-size: 1.6rem; font-weight: 700; max-width: 180px; }
     .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; z-index: 99; font-size: .95rem; box-shadow: var(--shadow); }
-    .login { max-width: 360px; margin: 12vh auto; text-align: center; background: var(--bg-2); }
+    .login { max-width: 380px; margin: 10vh auto; text-align: center; background: var(--bg-2); }
+    .linkbtn { display: block; margin: 14px auto 0; border: 0; background: none; color: var(--gold); font: 600 .92rem var(--sans); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; min-height: 36px; }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 48px; }
+    .pw-eye { position: absolute; right: 6px; bottom: 6px; width: 38px; height: 34px; border: 0; background: none; cursor: pointer; font-size: 1.1rem; opacity: .6; }
+    .pw-eye:hover { opacity: 1; }
+    .msg.ok { background: #e2f1e7; color: var(--ok); }
     .help { font-size: .88rem; color: var(--muted); }
     .help code { background: var(--bg); padding: 1px 6px; border-radius: 6px; }
     ol.help { padding-left: 1.2em; }
@@ -59,10 +65,29 @@
     <form class="panel login" id="loginForm">
       <img src="/img/logo.webp" alt="Leya Nails" style="width:170px;margin:0 auto 14px;border-radius:18px">
       <h2>Panel de administración</h2>
-      <div class="field"><input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password" required></div>
+      <div class="field pw-wrap"><input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password" required><button type="button" class="pw-eye" data-eye="pass" aria-label="Mostrar contraseña">👁</button></div>
       <div id="loginMsg"></div>
-      <button class="btn block">Entrar</button>
+      <button class="btn block" id="loginBtn">Entrar</button>
+      <button type="button" class="linkbtn" data-auth-view="forgot">¿Olvidaste tu contraseña?</button>
     </form>
+
+    <div class="panel login hidden" id="forgotView">
+      <h2>🔐 Recuperar contraseña</h2>
+      <div id="forgotMsg"></div>
+      <div id="forgotStep1">
+        <p class="help">Te enviaremos un <b>código de 6 números</b> al chat de Telegram de Leya Nails.</p>
+        <button type="button" class="btn block" id="sendCode">📲 Enviar código por Telegram</button>
+      </div>
+      <form id="resetForm" class="hidden" style="text-align:left">
+        <p class="help" style="text-align:center">Revisa Telegram y escribe el código. Caduca en 10 minutos.</p>
+        <div class="field"><label>Código</label><input id="resetCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="123456" required style="letter-spacing:.4em;font-size:1.3rem;text-align:center"></div>
+        <div class="field pw-wrap"><label>Contraseña nueva</label><input type="password" id="resetPass" minlength="8" autocomplete="new-password" required><button type="button" class="pw-eye" data-eye="resetPass" aria-label="Mostrar contraseña">👁</button></div>
+        <div class="field"><label>Repite la contraseña</label><input type="password" id="resetPass2" minlength="8" autocomplete="new-password" required></div>
+        <button class="btn block">Guardar contraseña nueva</button>
+        <button type="button" class="linkbtn" id="resendCode">Enviar otro código</button>
+      </form>
+      <button type="button" class="linkbtn" data-auth-view="login">← Volver a entrar</button>
+    </div>
   </div>
 
   <div id="appView" class="hidden">
@@ -172,6 +197,16 @@
             <p class="help">Cada día tiene 2 turnos. Cuando un turno llega al número de clientas indicado, deja de mostrarse en el almanaque.</p>
           </div>
           <button class="btn block" style="margin-bottom:16px">Guardar ajustes</button>
+        </form>
+        <form class="panel" id="pwForm">
+          <h3>🔐 Cambiar contraseña</h3>
+          <div class="row">
+            <div class="field"><label>Contraseña actual</label><input type="password" id="pwCurrent" autocomplete="current-password" required></div>
+            <div class="field"><label>Nueva (mínimo 8)</label><input type="password" id="pwNew" minlength="8" autocomplete="new-password" required></div>
+            <div class="field"><label>Repite la nueva</label><input type="password" id="pwNew2" minlength="8" autocomplete="new-password" required></div>
+          </div>
+          <p class="help">💡 Usa una frase fácil de recordar, por ejemplo <code>UñasRosadas-Leya-2026</code>. Al cambiarla se cierra la sesión en los demás dispositivos.</p>
+          <button class="btn">Cambiar contraseña</button>
         </form>
         <div class="panel">
           <h3>🤖 Bot de Telegram</h3>

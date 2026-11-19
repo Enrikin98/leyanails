@@ -3,6 +3,7 @@ import {
   getSettings, setSetting, nowLocal, addDays, isDate, prettyDate, prettyTime,
   formatPrice, bytesToB64, shiftLabel,
 } from './lib.js';
+import { verifyPassword, newResetCode, CODE_MINUTES } from './auth.js';
 
 export async function tg(env, method, payload) {
   if (!env.TELEGRAM_TOKEN) return { ok: false, description: 'Falta TELEGRAM_TOKEN' };
@@ -115,6 +116,9 @@ const HELP = `💅 <b>Comandos de administración</b>
 /disenos — últimos diseños
 /borrar 12 — quita el diseño #12
 
+<b>Seguridad</b>
+/clave — código para poner una contraseña nueva en el panel
+
 /web — enlace de la página`;
 
 async function listAppointments(db, s, from, to, onlyPending = false) {
@@ -188,7 +192,9 @@ async function handleMessage(env, db, msg) {
 
   // Registrar a la administradora: /admin <contraseña>
   if (cmd === '/admin') {
-    if (env.ADMIN_PASSWORD && arg === env.ADMIN_PASSWORD) {
+    if (await verifyPassword(env, db, arg)) {
+      // Borra el mensaje que contiene la contraseña
+      tg(env, 'deleteMessage', { chat_id: chatId, message_id: msg.message_id }).catch(() => {});
       await setSetting(db, 'admin_chat_id', chatId);
       return say('✅ Listo. Este chat recibirá las citas y puede administrar el catálogo.\n\n' + HELP);
     }
@@ -277,11 +283,38 @@ async function handleMessage(env, db, msg) {
       if (d.image_id) await db.prepare('DELETE FROM images WHERE id = ?').bind(d.image_id).run();
       return say(`🗑️ Diseño #${id} eliminado.`);
     }
+    case '/clave': {
+      const r = await sendResetCode(env, db);
+      return r === 'wait' ? say('Ya te envié un código hace menos de un minuto. Revisa arriba 👆') : null;
+    }
     case '/web':
       return say(site ? `🌐 ${site}\n⚙️ Panel: ${site.replace(/\/$/, '')}/admin.html` : 'Aún no hay enlace configurado (Ajustes → Enlace de la página).');
     default:
       return say('No entendí 🤔\n\n' + HELP);
   }
+}
+
+/** Envía un código de recuperación al chat de administración. 'ok' | 'wait' | 'fail' */
+export async function sendResetCode(env, db) {
+  const s = await getSettings(db);
+  if (!s.admin_chat_id) return 'fail';
+  const code = await newResetCode(db);
+  if (!code) return 'wait';
+  const site = (s.site_url || env.SITE_URL || '').replace(/\/$/, '');
+  const r = await tg(env, 'sendMessage', {
+    chat_id: s.admin_chat_id, parse_mode: 'HTML',
+    text: `🔐 <b>Código para cambiar la contraseña del panel</b>
+
+<code>${code}</code>
+
+` +
+      `Escríbelo en el panel → “¿Olvidaste tu contraseña?”. Caduca en ${CODE_MINUTES} minutos.
+
+` +
+      `⚠️ Si no lo pediste tú, ignora este mensaje: nadie puede usarlo sin este chat.`,
+    ...(site.startsWith('https://') ? { reply_markup: { inline_keyboard: [[{ text: '⚙️ Abrir el panel', url: site + '/admin.html#recuperar' }]] } } : {}),
+  });
+  return r.ok ? 'ok' : 'fail';
 }
 
 export async function handleUpdate(env, db, update) {

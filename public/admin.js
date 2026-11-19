@@ -1,11 +1,12 @@
 (() => {
   const $ = s => document.querySelector(s);
   const h = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // La sesión dura 7 días en este dispositivo (se guarda un token, nunca la contraseña)
   const ss = {
-    get() { try { return sessionStorage.getItem('leya_admin') || ''; } catch { return ''; } },
-    set(v) { try { v ? sessionStorage.setItem('leya_admin', v) : sessionStorage.removeItem('leya_admin'); } catch {} },
+    get() { try { return localStorage.getItem('leya_token') || ''; } catch { return ''; } },
+    set(v) { try { v ? localStorage.setItem('leya_token', v) : localStorage.removeItem('leya_token'); } catch {} },
   };
-  let key = ss.get();
+  let token = ss.get();
   let D = null;
   let filter = 'upcoming';
   let newImage = null;
@@ -27,11 +28,11 @@
 
   async function api(path, method = 'GET', body) {
     const res = await fetch('/api/admin' + path, {
-      method, headers: { 'content-type': 'application/json', 'x-admin-key': key },
+      method, headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
       body: body ? JSON.stringify(body) : undefined,
     });
     const r = await res.json().catch(() => ({}));
-    if (res.status === 401) { logout(); throw new Error('Contraseña incorrecta'); }
+    if (res.status === 401) { logout(r.error || 'Tu sesión terminó. Entra de nuevo.'); throw new Error(r.error || 'Sesión terminada'); }
     if (!res.ok) throw new Error(r.error || 'Error');
     return r;
   }
@@ -195,12 +196,12 @@
     if (t.id === 'addService') { await api('/services', 'POST', { name: 'Nuevo servicio', price: 0, sort: D.services.length + 1 }); toast('Servicio agregado, edítalo abajo'); return load(); }
     if (t.id === 'tgSetup') { const r = await api('/telegram/setup', 'POST'); toast(r.ok ? '✅ Bot conectado' : '❌ ' + r.description); return loadTgStatus(); }
     if (t.id === 'tgTest') { const r = await api('/telegram/test', 'POST'); toast(r.ok ? '✅ Mensaje enviado, revisa Telegram' : '❌ ' + r.description); }
-    if (t.id === 'logout') logout();
+    if (t.id === 'logout') logout('Sesión cerrada.');
   }));
 
   document.addEventListener('submit', run(async e => {
     const f = e.target;
-    if (f.id === 'loginForm' || f.id === 'designForm' || f.id === 'settingsForm' || f.id === 'blockForm') return;
+    if (['loginForm', 'designForm', 'settingsForm', 'blockForm', 'pwForm', 'resetForm'].includes(f.id)) return;
     e.preventDefault();
     if (f.dataset.service) {
       const id = Number(f.dataset.service);
@@ -269,20 +270,95 @@
     e.target.reset(); toast('🔒 Día bloqueado'); await load();
   }));
 
-  // ---------- Login ----------
-  function logout() { key = ''; ss.set(''); $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden'); }
+  // ---------- Contraseña ----------
+  $('#pwForm').addEventListener('submit', run(async e => {
+    e.preventDefault();
+    if ($('#pwNew').value !== $('#pwNew2').value) return toast('Las contraseñas nuevas no coinciden');
+    if ($('#pwNew').value.length < 8) return toast('La nueva debe tener al menos 8 caracteres');
+    await api('/password', 'POST', { current: $('#pwCurrent').value, password: $('#pwNew').value });
+    e.target.reset();
+    toast('✅ Contraseña cambiada');
+  }));
+
+  // ---------- Entrar / salir / recuperar ----------
+  async function auth(path, body) {
+    const res = await fetch('/api/auth/' + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(r.error || 'No se pudo conectar con el servidor');
+    return r;
+  }
+  const say = (el, text, ok) => { $(el).innerHTML = text ? `<div class="msg ${ok ? 'ok' : 'err'}">${h(text)}</div>` : ''; };
+
+  function showAuth(view) {
+    $('#loginForm').classList.toggle('hidden', view !== 'login');
+    $('#forgotView').classList.toggle('hidden', view !== 'forgot');
+    say('#loginMsg', ''); say('#forgotMsg', '');
+    if (view === 'forgot') { $('#forgotStep1').classList.remove('hidden'); $('#resetForm').classList.add('hidden'); }
+  }
+
+  function logout(msg) {
+    if (token) fetch('/api/auth/logout', { method: 'POST', headers: { authorization: 'Bearer ' + token } }).catch(() => {});
+    token = ''; ss.set('');
+    $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden');
+    showAuth('login');
+    if (typeof msg === 'string') say('#loginMsg', msg);
+  }
+
   async function enter() {
     try {
       await load();
-      ss.set(key);
       $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
-    } catch (e) {
-      $('#loginMsg').innerHTML = `<div class="msg err">${h(e.message)}</div>`;
-    }
+    } catch (e) { say('#loginMsg', e.message); }
   }
-  $('#loginForm').addEventListener('submit', e => { e.preventDefault(); key = $('#pass').value; enter(); });
-  if (key) enter();
+
+  $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('#loginBtn'); btn.disabled = true; btn.textContent = 'Entrando…';
+    try {
+      token = (await auth('login', { password: $('#pass').value })).token;
+      ss.set(token); $('#pass').value = '';
+      await enter();
+    } catch (err) { say('#loginMsg', err.message); }
+    finally { btn.disabled = false; btn.textContent = 'Entrar'; }
+  });
+
+  async function sendCode(btn) {
+    btn.disabled = true;
+    try {
+      await auth('forgot');
+      $('#forgotStep1').classList.add('hidden'); $('#resetForm').classList.remove('hidden');
+      say('#forgotMsg', '📲 Código enviado. Revisa Telegram.', true);
+      $('#resetCode').focus();
+    } catch (err) { say('#forgotMsg', err.message); }
+    finally { btn.disabled = false; }
+  }
+  $('#sendCode').addEventListener('click', e => sendCode(e.currentTarget));
+  $('#resendCode').addEventListener('click', e => sendCode(e.currentTarget));
+  $('#resetCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); });
+
+  $('#resetForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test($('#resetCode').value)) return say('#forgotMsg', 'El código tiene 6 números.');
+    if ($('#resetPass').value.length < 8) return say('#forgotMsg', 'La contraseña debe tener al menos 8 caracteres.');
+    if ($('#resetPass').value !== $('#resetPass2').value) return say('#forgotMsg', 'Las contraseñas no coinciden.');
+    try {
+      token = (await auth('reset', { code: $('#resetCode').value, password: $('#resetPass').value })).token;
+      ss.set(token); e.target.reset();
+      await enter();
+      toast('✅ Contraseña nueva guardada');
+    } catch (err) { say('#forgotMsg', err.message); }
+  });
+
+  document.addEventListener('click', e => {
+    const v = e.target.closest('[data-auth-view]');
+    if (v) return showAuth(v.dataset.authView);
+    const eye = e.target.closest('[data-eye]');
+    if (eye) { const i = document.getElementById(eye.dataset.eye); i.type = i.type === 'password' ? 'text' : 'password'; }
+  });
+
+  if (location.hash === '#recuperar') showAuth('forgot');
+  else if (token) enter();
 
   // Refrescar citas cada minuto si el panel está abierto
-  setInterval(() => { if (key && !document.hidden && !$('#appView').classList.contains('hidden') && !document.activeElement?.closest('form')) load().catch(() => {}); }, 60000);
+  setInterval(() => { if (token && !document.hidden && !$('#appView').classList.contains('hidden') && !document.activeElement?.closest('form')) load().catch(() => {}); }, 60000);
 })();

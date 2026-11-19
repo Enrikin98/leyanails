@@ -4,7 +4,11 @@ import {
   getSettings, setSetting, PUBLIC_SETTINGS, shiftsForDay, monthAvailability, dayStatus, nowLocal,
   isDate, b64ToBytes, clean,
 } from './lib.js';
-import { handleUpdate, notifyNewAppointment, tg, webhookSecret } from './telegram.js';
+import { handleUpdate, notifyNewAppointment, tg, webhookSecret, sendResetCode } from './telegram.js';
+import {
+  verifyPassword, setPassword, clientId, lockedMinutes, registerFail, clearFails,
+  createSession, validSession, endSession, endAllSessions, bearer, checkResetCode, MIN_PASSWORD,
+} from './auth.js';
 
 const app = new Hono();
 const db = c => c.env.DB;
@@ -100,16 +104,78 @@ app.post('/api/telegram', async c => {
 
 // ---------- Administración ----------
 
+// ---------- Acceso al panel ----------
+
+const lockMsg = m => `Demasiados intentos. Espera ${m} minuto${m === 1 ? '' : 's'} e inténtalo de nuevo.`;
+const pwError = p => (String(p || '').length < MIN_PASSWORD ? `La contraseña debe tener al menos ${MIN_PASSWORD} caracteres` : null);
+
+app.post('/api/auth/login', async c => {
+  const who = clientId(c);
+  const m = await lockedMinutes(db(c), who);
+  if (m) return bad(c, lockMsg(m), 429);
+  const { password } = await c.req.json().catch(() => ({}));
+  if (!(await verifyPassword(c.env, db(c), password))) {
+    const f = await registerFail(db(c), who);
+    return bad(c, f.locked ? lockMsg(15) : `Contraseña incorrecta. Te quedan ${f.left} intento${f.left === 1 ? '' : 's'}.`, f.locked ? 429 : 401);
+  }
+  await clearFails(db(c), who);
+  return c.json({ token: await createSession(db(c)) });
+});
+
+app.post('/api/auth/logout', async c => {
+  await endSession(db(c), bearer(c));
+  return c.json({ ok: true });
+});
+
+app.post('/api/auth/forgot', async c => {
+  const s = await getSettings(db(c));
+  if (!c.env.TELEGRAM_TOKEN || !s.admin_chat_id) {
+    return bad(c, 'La recuperación necesita el bot de Telegram conectado. Usa la llave maestra (ADMIN_PASSWORD).', 409);
+  }
+  const r = await sendResetCode(c.env, db(c));
+  if (r === 'wait') return bad(c, 'Ya se envió un código hace poco. Espera un minuto.', 429);
+  if (r !== 'ok') return bad(c, 'No se pudo enviar el código por Telegram. Inténtalo más tarde.', 502);
+  return c.json({ ok: true });
+});
+
+app.post('/api/auth/reset', async c => {
+  const who = clientId(c);
+  const m = await lockedMinutes(db(c), who);
+  if (m) return bad(c, lockMsg(m), 429);
+  const { code, password } = await c.req.json().catch(() => ({}));
+  const e = pwError(password);
+  if (e) return bad(c, e);
+  const r = await checkResetCode(db(c), code);
+  if (r !== 'ok') {
+    await registerFail(db(c), who);
+    return bad(c, { expired: 'El código caducó o ya se usó. Pide uno nuevo.', too_many: 'Demasiados intentos con ese código. Pide uno nuevo.', wrong: 'Código incorrecto.' }[r], 400);
+  }
+  await setPassword(db(c), password);
+  await endAllSessions(db(c));
+  await clearFails(db(c), who);
+  return c.json({ token: await createSession(db(c)) });
+});
+
 app.use('/api/admin/*', async (c, next) => {
-  const pass = c.env.ADMIN_PASSWORD;
-  if (!pass) return bad(c, 'Falta configurar ADMIN_PASSWORD en el servidor', 500);
-  if (c.req.header('x-admin-key') !== pass) return bad(c, 'Contraseña incorrecta', 401);
+  if (!(await validSession(db(c), bearer(c)))) return bad(c, 'Tu sesión terminó. Entra de nuevo.', 401);
   await next();
+});
+
+app.post('/api/admin/password', async c => {
+  const { current, password } = await c.req.json().catch(() => ({}));
+  if (!(await verifyPassword(c.env, db(c), current))) return bad(c, 'La contraseña actual no es correcta');
+  const e = pwError(password);
+  if (e) return bad(c, e);
+  await setPassword(db(c), password);
+  await endAllSessions(db(c), bearer(c)); // cierra la sesión en los demás dispositivos
+  return c.json({ ok: true });
 });
 
 app.get('/api/admin/data', async c => {
   const D = db(c);
   const settings = await getSettings(D);
+  for (const k of ['admin_pass_hash', 'reset_code', 'reset_expires', 'reset_tries', 'reset_sent']) delete settings[k];
+  settings.has_custom_password = !!(await getSettings(D)).admin_pass_hash;
   const { results: services } = await D.prepare('SELECT * FROM services ORDER BY sort, id').all();
   const { results: designs } = await D.prepare('SELECT * FROM designs ORDER BY featured DESC, id DESC').all();
   const { results: appointments } = await D.prepare(
