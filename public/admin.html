@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel Leya Nails</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f8eef0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body.admin { --bg:#f8eef0; --bg-2:#fff; --bg-3:#f3e3e6; --card:#fff; --card-2:#f6e7ea; --line:#ecd5d9; --line-2:#d9b3ba; --ink:#3a2a2e; --muted:#866f74;
+      --gold:#a8783a; --gold-2:#8a5a2b; --ok:#2f8a57; --bad:#c0453b; --rose:#e45c97; --rose-dark:#a8783a; --rose-soft:#fbe3ec;
+      --shadow:0 6px 24px rgba(138,90,81,.12); color-scheme: light; background: #f8eef0; }
+    body.admin .top { position: sticky; background: rgba(255,255,255,.92); backdrop-filter: blur(10px); box-shadow: 0 1px 0 var(--line); }
+    body.admin input, body.admin select, body.admin textarea { background: #fff; }
+    body.admin .chip.on { color: #fff; }
+    .tabs { display: flex; gap: 4px; overflow-x: auto; }
+    .tab { border: 0; background: none; padding: 10px 14px; font: 600 .95rem var(--sans); color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; min-height: 44px; }
+    .tab.on { color: var(--rose-dark); border-color: var(--rose); }
+    main { padding: 20px 0 60px; }
+    .panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-bottom: 16px; }
+    .panel h3 { font-size: 1.15rem; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .field { margin-bottom: 12px; }
+    .field label { font-size: .88rem; }
+    .appt { border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+    .appt-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+    .appt .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .badge { font-size: .78rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--rose-soft); color: var(--rose-dark); }
+    .badge.confirmed { background: #e2f1e7; color: var(--ok); }
+    .badge.rejected, .badge.cancelled { background: #f3e1df; color: var(--bad); }
+    .badge.done { background: #e9e6f5; color: #5a4c9a; }
+    .date-h { font-family: var(--serif); font-size: 1.1rem; margin: 18px 0 8px; text-transform: capitalize; }
+    .item { display: grid; grid-template-columns: 96px 1fr; gap: 14px; border-top: 1px solid var(--line); padding: 14px 0; }
+    .item:first-of-type { border-top: 0; }
+    .thumb { width: 96px; height: 96px; border-radius: 12px; background: var(--rose-soft) center/cover; position: relative; overflow: hidden; display: grid; place-items: center; color: var(--rose-dark); font-size: .8rem; text-align: center; cursor: pointer; }
+    .thumb input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .dcard { border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+    .dcard img { aspect-ratio: 1; object-fit: cover; width: 100%; }
+    .dcard .b { padding: 8px; font-size: .88rem; }
+    .dcard .b input, .dcard .b select { padding: .4em .5em; font-size: .88rem; margin-bottom: 6px; border-radius: 8px; }
+    .check { display: flex; align-items: center; gap: 8px; font-size: .9rem; margin: 6px 0; }
+    .check input { width: auto; }
+    .weekdays { display: flex; gap: 6px; flex-wrap: wrap; }
+    .weekdays label { display: flex; align-items: center; gap: 4px; border: 1.5px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: .9rem; cursor: pointer; }
+    .weekdays input { width: auto; }
+    .rate-big { font-size: 1.6rem; font-weight: 700; max-width: 180px; }
+    .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; z-index: 99; font-size: .95rem; box-shadow: var(--shadow); }
+    .login { max-width: 360px; margin: 12vh auto; text-align: center; background: var(--bg-2); }
+    .help { font-size: .88rem; color: var(--muted); }
+    .help code { background: var(--bg); padding: 1px 6px; border-radius: 6px; }
+    ol.help { padding-left: 1.2em; }
+  </style>
+</head>
+<body class="admin">
+  <div id="loginView" class="wrap">
+    <form class="panel login" id="loginForm">
+      <img src="/img/logo.webp" alt="Leya Nails" style="width:170px;margin:0 auto 14px;border-radius:18px">
+      <h2>Panel de administración</h2>
+      <div class="field"><input type="password" id="pass" placeholder="Contraseña" autocomplete="current-password" required></div>
+      <div id="loginMsg"></div>
+      <button class="btn block">Entrar</button>
+    </form>
+  </div>
+
+  <div id="appView" class="hidden">
+    <header class="top">
+      <div class="wrap" style="height:auto;flex-wrap:wrap;padding:6px 0">
+        <a class="brand" href="/" target="_blank"><span class="script pink-text">Leya</span><span class="display gold-text">NAILS</span></a>
+        <nav class="tabs" id="tabs">
+          <button class="tab on" data-tab="citas">📅 Citas</button>
+          <button class="tab" data-tab="servicios">💼 Servicios</button>
+          <button class="tab" data-tab="disenos">🖼️ Diseños</button>
+          <button class="tab" data-tab="ajustes">⚙️ Ajustes</button>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <!-- CITAS -->
+      <section data-view="citas">
+        <div class="chips" style="justify-content:flex-start" id="apptFilter">
+          <button class="chip on" data-f="upcoming">Próximas</button>
+          <button class="chip" data-f="pending">Pendientes</button>
+          <button class="chip" data-f="past">Pasadas</button>
+        </div>
+        <div id="apptList"></div>
+        <div class="panel">
+          <h3>🔒 Días libres / bloqueados</h3>
+          <p class="help">Esos días no se podrán reservar (vacaciones, feriados…).</p>
+          <form class="row" id="blockForm" style="align-items:end">
+            <div class="field"><label>Fecha</label><input type="date" id="blockDate" required></div>
+            <div class="field"><label>Motivo (opcional)</label><input id="blockReason" maxlength="100"></div>
+            <div class="field"><button class="btn block">Bloquear</button></div>
+          </form>
+          <div id="blockedList"></div>
+        </div>
+      </section>
+
+      <!-- SERVICIOS -->
+      <section data-view="servicios" class="hidden">
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <h3 style="margin:0">Servicios y precios</h3>
+            <button class="btn small" id="addService">+ Agregar servicio</button>
+          </div>
+          <p class="help" id="currencyHelp"></p>
+          <div id="serviceList"></div>
+        </div>
+      </section>
+
+      <!-- DISEÑOS -->
+      <section data-view="disenos" class="hidden">
+        <div class="panel">
+          <h3>Subir diseño nuevo</h3>
+          <form id="designForm">
+            <div class="item" style="border:0;padding-top:0">
+              <label class="thumb" id="newThumb">📷<br>Elegir foto<input type="file" accept="image/*" id="newPhoto"></label>
+              <div>
+                <div class="row">
+                  <div class="field"><label>Título</label><input id="newTitle" placeholder="Ej: Francesa rosa" maxlength="80"></div>
+                  <div class="field"><label>Categoría</label><input id="newCat" list="catList" placeholder="Ej: Francesas" maxlength="40"></div>
+                  <div class="field"><label>Precio (opcional)</label><input id="newPrice" type="number" min="0" step="any"></div>
+                </div>
+                <label class="check"><input type="checkbox" id="newFeatured"> ★ Diseño del mes (sale primero)</label>
+                <button class="btn" id="newSave">Publicar diseño</button>
+              </div>
+            </div>
+          </form>
+          <datalist id="catList"></datalist>
+          <p class="help">💡 También puedes enviar la foto directamente al bot de Telegram con un texto como <code>Francesa rosa - 15 #francesas</code>.</p>
+        </div>
+        <div class="panel">
+          <h3>Diseños publicados</h3>
+          <div class="dgrid" id="designList"></div>
+        </div>
+      </section>
+
+      <!-- AJUSTES -->
+      <section data-view="ajustes" class="hidden">
+        <form id="settingsForm">
+          <div class="panel">
+            <h3>💱 Tasa de cambio</h3>
+            <div class="row">
+              <div class="field"><label>CUP por 1 USD</label><input class="rate-big" type="number" min="0" step="any" name="rate"></div>
+              <div class="field"><label>Los precios se guardan en</label>
+                <select name="base_currency"><option value="USD">USD (se muestran también en CUP)</option><option value="CUP">CUP</option></select></div>
+            </div>
+            <p class="help">Al cambiar la tasa, todos los precios en CUP de la página se recalculan solos. Pon 0 para no mostrar conversión.</p>
+          </div>
+          <div class="panel">
+            <h3>🏪 Negocio</h3>
+            <div class="row">
+              <div class="field"><label>Nombre</label><input name="business_name"></div>
+              <div class="field"><label>Teléfono</label><input name="phone"></div>
+              <div class="field"><label>WhatsApp (con 53)</label><input name="whatsapp" placeholder="5355178989"></div>
+            </div>
+            <div class="field"><label>Frase</label><input name="tagline"></div>
+            <div class="field"><label>Dirección (opcional)</label><input name="address"></div>
+          </div>
+          <div class="panel">
+            <h3>🕘 Días y turnos</h3>
+            <div class="field"><span class="label">Días de trabajo</span><div class="weekdays" id="weekdays"></div></div>
+            <div class="row">
+              <div class="field"><label>☀️ Turno mañana</label><input type="time" name="morning_time"></div>
+              <div class="field"><label>🌙 Turno tarde</label><input type="time" name="afternoon_time"></div>
+              <div class="field"><label>Clientas por turno</label><input type="number" min="1" max="10" name="shift_capacity"></div>
+              <div class="field"><label>Aviso mínimo (horas)</label><input type="number" min="0" name="min_notice_hours"></div>
+              <div class="field"><label>Reservar hasta (días)</label><input type="number" min="1" max="120" name="max_days_ahead"></div>
+            </div>
+            <p class="help">Cada día tiene 2 turnos. Cuando un turno llega al número de clientas indicado, deja de mostrarse en el almanaque.</p>
+          </div>
+          <button class="btn block" style="margin-bottom:16px">Guardar ajustes</button>
+        </form>
+        <div class="panel">
+          <h3>🤖 Bot de Telegram</h3>
+          <div id="tgStatus" class="help">Comprobando…</div>
+          <ol class="help">
+            <li>Abre el bot en Telegram y envíale: <code>/admin TU_CONTRASEÑA</code> (la misma de este panel). Así ese chat recibe las citas.</li>
+            <li>Cuando la página esté publicada (https), pulsa <b>Conectar bot</b> una vez.</li>
+          </ol>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn small" id="tgSetup">Conectar bot</button>
+            <button class="btn small ghost" id="tgTest">Enviar mensaje de prueba</button>
+          </div>
+        </div>
+        <button class="btn ghost block" id="logout">Cerrar sesión</button>
+      </section>
+    </main>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

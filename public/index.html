@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Leya Nails · Manicure Professional</title>
+  <meta name="description" content="Poligel, Base Rubber, Dipping, Acrílico, Esmaltado de Gel y Manicura. Mira los diseños y agenda tu cita en línea.">
+  <meta name="theme-color" content="#0e0906">
+  <meta property="og:title" content="Leya Nails 💅 Manicure Professional">
+  <meta property="og:description" content="Mira nuestros diseños y agenda tu cita en línea.">
+  <meta property="og:image" content="/img/og.jpg">
+  <link rel="icon" href="/img/icon.png">
+  <link rel="apple-touch-icon" href="/img/icon.png">
+  <link rel="preload" href="/fonts/great-vibes.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/cinzel-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+  <header class="top" id="top">
+    <div class="wrap">
+      <a class="brand" href="#inicio" aria-label="Leya Nails, inicio"><span class="script pink-text">Leya</span><span class="display gold-text">NAILS</span></a>
+      <nav class="nav">
+        <a href="#servicios">Servicios</a>
+        <a href="#disenos">Diseños</a>
+        <a href="#como">Cómo reservar</a>
+        <a href="#contacto">Contacto</a>
+        <button class="btn small" data-book>Agendar cita</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="inicio">
+    <div class="fx" id="fx" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="hero-text">
+        <div class="eyebrow reveal">Manicure Professional</div>
+        <h1 class="reveal" style="--d:.1s"><span class="pink-text">Leya</span><span class="gold-text shine">NAILS</span></h1>
+        <p class="lead reveal" style="--d:.2s" id="tagline">Con los mayores deseos de hacerte ver aún más bonita.</p>
+        <div class="hero-actions reveal" style="--d:.3s">
+          <button class="btn" data-book>💅 Agendar mi cita</button>
+          <a class="btn ghost" href="#disenos">Ver diseños</a>
+        </div>
+        <div class="hero-badges reveal" style="--d:.4s">
+          <span class="pill">📅 <span id="badgeDays">Lunes a Viernes</span></span>
+          <span class="pill">☀️ Mañana · 🌙 Tarde</span>
+        </div>
+      </div>
+      <div class="hero-art reveal" style="--d:.15s">
+        <span class="ring r1"></span><span class="ring r2"></span>
+        <picture><img src="/img/logo.webp" alt="Leya Nails, Manicure Professional" width="640" height="960" fetchpriority="high"></picture>
+      </div>
+    </div>
+    <a class="scroll-hint" href="#servicios" aria-label="Bajar">⌄</a>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="marquee-track" id="marquee"></div></div>
+
+  <section class="block" id="servicios">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="script pink-text">Nuestros</span>
+        <h2 class="gold-text">Servicios</h2>
+        <p>Elige tu servicio favorito y reserva tu turno en segundos</p>
+        <div class="divider"></div>
+      </div>
+      <div class="services" id="services"><p class="empty">Cargando…</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="disenos" style="background:linear-gradient(180deg,transparent,rgba(255,158,199,.04),transparent)">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="script pink-text">Galería de</span>
+        <h2 class="gold-text">Diseños</h2>
+        <p>Toca el que te enamore y pídelo para tu cita</p>
+        <div class="divider"></div>
+      </div>
+      <div class="chips reveal" id="cats"></div>
+      <div class="gallery" id="gallery"></div>
+    </div>
+  </section>
+
+  <section class="block" id="como">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="script pink-text">Así de fácil</span>
+        <h2 class="gold-text">Cómo reservar</h2>
+        <div class="divider"></div>
+      </div>
+      <div class="steps">
+        <div class="step reveal"><div class="n">1</div><h3>Elige tu servicio</h3><p>Y si quieres, el diseño que más te guste de la galería.</p></div>
+        <div class="step reveal" style="--d:.1s"><div class="n">2</div><h3>Día y turno</h3><p>Escoge en el almanaque el día y el turno de la mañana o de la tarde.</p></div>
+        <div class="step reveal" style="--d:.2s"><div class="n">3</div><h3>Te confirmamos</h3><p>Recibimos tu solicitud y te confirmamos por WhatsApp.</p></div>
+      </div>
+      <div style="text-align:center;margin-top:34px" class="reveal"><button class="btn gold" data-book>✨ Reservar ahora</button></div>
+    </div>
+  </section>
+
+  <section class="block" id="contacto">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="script pink-text">Te esperamos</span>
+        <h2 class="gold-text">Contacto</h2>
+        <div class="divider"></div>
+      </div>
+      <div class="info">
+        <div class="card reveal"><h3>🕘 Turnos</h3><div id="hours"></div></div>
+        <div class="card reveal" style="--d:.1s"><h3>📞 Teléfono</h3><p><a id="tel" href="#" style="font-size:1.3rem;font-weight:700;text-decoration:none"></a></p>
+          <p style="margin-top:14px"><a class="btn wa small" id="waContact" href="#" target="_blank" rel="noopener">Escribir por WhatsApp</a></p></div>
+        <div class="card reveal hidden" style="--d:.2s" id="addrCard"><h3>📍 Dirección</h3><p id="addr"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="script pink-text">Leya Nails</span>
+    © <span id="year"></span> · Hecho con <span style="color:var(--pink)">♥</span>
+  </footer>
+
+  <div class="mobile-cta" id="mobileCta">
+    <button class="btn" data-book>💅 Agendar cita</button>
+    <a class="btn wa" id="waFab" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+  </div>
+
+  <!-- Ver diseño -->
+  <dialog id="lightbox" class="lightbox">
+    <div class="sheet">
+      <div class="dlg-head"><h2 class="pink-text" id="lbTitle"></h2><button class="x" data-close aria-label="Cerrar">×</button></div>
+      <img id="lbImg" alt="">
+      <div class="dlg-body" style="padding-top:16px">
+        <p id="lbMeta" class="muted" style="margin-top:0"></p>
+        <button class="btn block" id="lbBook">💅 Quiero este diseño</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Reservar -->
+  <dialog id="booking">
+    <div class="sheet">
+      <div class="dlg-head"><h2 class="pink-text">Agenda tu cita</h2><button class="x" data-close aria-label="Cerrar">×</button></div>
+      <div class="dlg-body">
+        <div class="progress" id="progress"><i></i><i></i><i></i></div>
+        <div id="formMsg"></div>
+
+        <div class="pane" data-step="1">
+          <p class="step-title">1 · ¿Qué te vas a hacer?</p>
+          <div class="picked hidden" id="designPicked"><img id="pickedImg" alt=""><span id="pickedTitle"></span><button type="button" class="x" id="unpick" aria-label="Quitar diseño">×</button></div>
+          <div class="svc-pick" id="svcPick"></div>
+          <div class="nav-row"><button class="btn" data-next>Continuar →</button></div>
+        </div>
+
+        <div class="pane hidden" data-step="2">
+          <p class="step-title">2 · Elige el día y el turno</p>
+          <div class="cal" id="cal">
+            <div class="cal-head">
+              <button type="button" class="cal-nav" id="calPrev" aria-label="Mes anterior">‹</button>
+              <b id="calTitle"></b>
+              <button type="button" class="cal-nav" id="calNext" aria-label="Mes siguiente">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="cal-legend"><span>Disponible</span><span class="f">Lleno</span></div>
+          </div>
+          <div class="shifts" id="shifts"></div>
+          <div class="nav-row"><button class="btn ghost" data-prev>←</button><button class="btn" data-next>Continuar →</button></div>
+        </div>
+
+        <form class="pane hidden" data-step="3" id="form" novalidate>
+          <p class="step-title">3 · Tus datos</p>
+          <div class="summary" id="summary"></div>
+          <div class="field"><label for="fName">Tu nombre</label><input id="fName" autocomplete="name" required maxlength="60" placeholder="¿Cómo te llamas?"></div>
+          <div class="field">
+            <label for="fPhone">Teléfono / WhatsApp</label>
+            <div class="phone-group" id="phoneGroup">
+              <span class="phone-prefix" aria-hidden="true">+53</span>
+              <input id="fPhone" type="tel" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" autocomplete="tel-national" required placeholder="5xxxxxxx" aria-describedby="phoneHint">
+              <span class="phone-count" id="phoneCount">0/8</span>
+            </div>
+            <small class="phone-hint" id="phoneHint">8 dígitos, solo números</small>
+          </div>
+          <div class="field"><label for="fNotes">Nota (opcional)</label><textarea id="fNotes" maxlength="300" placeholder="Largo, color, idea que tengas…"></textarea></div>
+          <input class="hp" id="fWebsite" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="nav-row"><button type="button" class="btn ghost" data-prev>←</button><button class="btn" id="submit" type="submit">✨ Enviar solicitud</button></div>
+          <p class="muted" style="font-size:.85rem;text-align:center;margin:12px 0 0">Te confirmaremos la cita por WhatsApp o llamada.</p>
+        </form>
+
+        <div class="pane hidden success" data-step="4">
+          <div class="okmark"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <h3 class="pink-text">¡Solicitud enviada!</h3>
+          <div class="summary" id="summaryDone" style="text-align:left"></div>
+          <p class="muted">Te escribiremos pronto para confirmar tu cita 💕</p>
+          <a class="btn wa block" id="waDone" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>

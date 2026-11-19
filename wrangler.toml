@@ -1,0 +1,11 @@
+name = "leya-nails"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+[assets]
+directory = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "leya-nails"
+database_id = "59f25b23-e756-428c-82b9-8156ead17b3c"
